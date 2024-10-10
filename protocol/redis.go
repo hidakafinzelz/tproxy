@@ -13,7 +13,7 @@ type redisInterop struct {
 func (red *redisInterop) Dump(r io.Reader, source string, id int, quiet bool) {
 	buf := bufio.NewReader(r)
 	for {
-		var buffer = make([]byte, 1<<20)
+		var buffer = make([]byte, bufferSize)
 		// read raw data
 		n, _ := buf.Read(buffer)
 		if n > 0 {
