@@ -2,34 +2,27 @@ package protocol
 
 import (
 	"bufio"
-	"io"
-	"strconv"
-	"strings"
-
 	"github.com/kevwan/tproxy/display"
+	"io"
+	"time"
 )
 
 type redisInterop struct {
 }
 
 func (red *redisInterop) Dump(r io.Reader, source string, id int, quiet bool) {
-	// only parse client send command
 	buf := bufio.NewReader(r)
 	for {
+		var buffer = make([]byte, 1<<20)
 		// read raw data
-		line, _, _ := buf.ReadLine()
-		lineStr := string(line)
-		if source != "SERVER" && strings.HasPrefix(lineStr, "*") {
-			cmdCount, _ := strconv.Atoi(strings.TrimLeft(lineStr, "*"))
-			var sb strings.Builder
-			for j := 0; j < cmdCount*2; j++ {
-				c, _, _ := buf.ReadLine()
-				if j&1 == 0 { // skip param length
-					continue
-				}
-				sb.WriteString(" " + string(c))
+		n, _ := buf.Read(buffer)
+		if n > 0 {
+			if source == "SERVER" {
+				go display.PrintfWithTime("\n[Server -> Client] : \n%s\n", string(buffer[:n:n]))
+			} else {
+				go display.PrintfWithTime("\n[Client -> Server] : \n%s\n", string(buffer[:n:n]))
 			}
-			display.PrintlnWithTime(strings.TrimSpace(sb.String()))
 		}
+		time.Sleep(time.Millisecond * 30)
 	}
 }
